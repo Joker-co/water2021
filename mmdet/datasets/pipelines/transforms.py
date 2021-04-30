@@ -1298,6 +1298,20 @@ class EQU(object):
 
 
 @PIPELINES.register_module()
+class COU(object):
+
+    def __init__(self, powerE=2.0, powerM=10):
+        self.powerE = powerE
+        self.powerM = powerM
+
+    def __call__(self, results):
+        img = results['img'].copy()
+        conimg = 1 / (1 + np.power(self.powerM / img, self.powerE)) * 255
+        results['img'] = conimg.astype(np.uint8)
+        return results
+
+
+@PIPELINES.register_module()
 class Albu(object):
     """Albumentation augmentation.
 
