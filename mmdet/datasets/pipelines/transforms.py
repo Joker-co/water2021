@@ -8,6 +8,7 @@ from numpy import random
 from mmdet.core import PolygonMasks
 from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
 from ..builder import PIPELINES
+import cv2
 
 try:
     from imagecorruptions import corrupt
@@ -1276,6 +1277,24 @@ class Corrupt(object):
         repr_str += f'(corruption={self.corruption}, '
         repr_str += f'severity={self.severity})'
         return repr_str
+
+
+@PIPELINES.register_module()
+class EQU(object):
+
+    def __init__(self):
+        self.color = True
+
+    def __call__(self, results):
+        img = results['img']
+        img_yuv = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
+        img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
+        img = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2RGB)
+        if 'img_fields' in results:
+            assert results['img_fields'] == ['img'], \
+                'Only single img_fields is allowed'
+        results['img'] = img
+        return results
 
 
 @PIPELINES.register_module()
