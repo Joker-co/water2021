@@ -298,6 +298,8 @@ def main():
             model = fuse_conv_bn(model)
 
         scale = item['scale']
+        # flip flag
+        flip_flag = item.get('flip_flag', None)
         flip = item.get('flip', False)
         scale_range = item['scale_range']
         scale_ranges.append(scale_range)
@@ -309,6 +311,8 @@ def main():
                 scale[1]) + '_flip.pkl'
         val_cfg = cfg.data.test
         val_cfg['pipeline'][1]['img_scale'] = scale
+        # flip flag
+        val_cfg['pipeline'][1]['flip_flag'] = flip_flag
         img_infos = None
         if flip:  # flip
             val_cfg['pipeline'][1]['transforms'][1] = dict(

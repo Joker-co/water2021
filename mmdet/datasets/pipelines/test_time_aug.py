@@ -54,7 +54,8 @@ class MultiScaleFlipAug(object):
                  img_scale=None,
                  scale_factor=None,
                  flip=False,
-                 flip_direction='horizontal'):
+                 flip_direction='horizontal',
+                 flip_flag=None):
         self.transforms = Compose(transforms)
         assert (img_scale is None) ^ (scale_factor is None), (
             'Must have but only one variable can be setted')
@@ -79,6 +80,8 @@ class MultiScaleFlipAug(object):
                 and not any([t['type'] == 'RandomFlip' for t in transforms])):
             warnings.warn(
                 'flip has no effect when RandomFlip is not in transforms')
+  
+        self.flip_flag = flip_flag
 
     def __call__(self, results):
         """Call function to apply test time augment transforms on results.
@@ -92,18 +95,47 @@ class MultiScaleFlipAug(object):
         """
 
         aug_data = []
-        flip_args = [(False, None)]
-        if self.flip:
-            flip_args += [(True, direction)
+        if self.flip_flag is not None:
+            flip_args = [[(False, None)] for _ in range(len(self.flip_flag))]
+            for idx in range(len(self.flip_flag)):
+                if self.flip_flag[idx]:
+                    flip_args[idx] += [(True, direction)
                           for direction in self.flip_direction]
-        for scale in self.img_scale:
-            for flip, direction in flip_args:
-                _results = results.copy()
-                _results[self.scale_key] = scale
-                _results['flip'] = flip
-                _results['flip_direction'] = direction
-                data = self.transforms(_results)
-                aug_data.append(data)
+
+            for scale, f_args in zip(self.img_scale, flip_args):
+                for flip, direction in f_args:
+                    _results = results.copy()
+                    _results[self.scale_key] = scale
+                    _results['flip'] = flip
+                    _results['flip_direction'] = direction
+                    data = self.transforms(_results)
+                    aug_data.append(data)
+        else:
+            flip_args = [(False, None)]
+            if self.flip:
+                flip_args += [(True, direction)
+                          for direction in self.flip_direction]
+            for scale in self.img_scale:
+                for flip, direction in flip_args:
+                    _results = results.copy()
+                    _results[self.scale_key] = scale
+                    _results['flip'] = flip
+                    _results['flip_direction'] = direction
+                    data = self.transforms(_results)
+                    aug_data.append(data)
+
+        # flip_args = [(False, None)]
+        # if self.flip:
+        #     flip_args += [(True, direction)
+        #                   for direction in self.flip_direction]
+        # for scale in self.img_scale:
+        #     for flip, direction in flip_args:
+        #         _results = results.copy()
+        #         _results[self.scale_key] = scale
+        #         _results['flip'] = flip
+        #         _results['flip_direction'] = direction
+        #         data = self.transforms(_results)
+        #         aug_data.append(data)
         # list of dict to dict of list
         aug_data_dict = {key: [] for key in aug_data[0]}
         for data in aug_data:

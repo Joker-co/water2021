@@ -17,6 +17,7 @@ model_cfg = [{
     "scale_range": [0, 10000],
     'prefix': "detectors",
     "scale": (2048, 600),
+    # "flip_flag": [False, True],
     },
     {
     "cfg_path": cfg_path,
